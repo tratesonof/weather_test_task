@@ -1,5 +1,6 @@
 package com.example.weather_task.feature.main_screen.ui
 
+import androidx.lifecycle.viewModelScope
 import com.example.weather_task.R
 import com.example.weather_task.base.utils.BaseViewModel
 import com.example.weather_task.base.utils.Event
@@ -9,6 +10,7 @@ import com.example.weather_task.database.repository.LocalCityForecastModel
 import com.example.weather_task.feature.main_screen.domain.ForecastInteractor
 import com.example.weather_task.feature.main_screen.domain.model.CityForecastModel
 import com.github.terrakok.cicerone.Router
+import kotlinx.coroutines.launch
 
 class MainScreenViewModel(
     private val forecastDatabase: ForecastRepository,
@@ -17,99 +19,121 @@ class MainScreenViewModel(
 ) :
     BaseViewModel<ViewState>() {
 
-    private var databaseMap: MutableMap<String, CityForecastModel> = mutableMapOf()
-    private val citiesMutableSet: MutableSet<String> = mutableSetOf("Moscow", "Saint Petersburg")
     val singleLiveEvent = SingleLiveEvent<SingleEvent>()
+    private var databaseList: MutableList<CityForecastModel> = mutableListOf(
+        CityForecastModel(city = "Moscow", temp = "0"),
+        CityForecastModel(city = "Saint Petersburg", temp = "0")
+    )
 
     init {
-        processDataEvent(DataEvent.LoadDataFromDatabase)
-
-        processUiEvent(UiEvent.GetForecasts)
+        viewModelScope.launch {
+            processDataEvent(DataEvent.DownloadDataFromDb)
+        }
     }
 
     override fun initialViewState(): ViewState {
-        return ViewState(listOf(), false)
+        return ViewState(
+            isLoading = true,
+            chosenCities = listOf()
+        )
     }
 
     override suspend fun reduce(event: Event, previousState: ViewState): ViewState? {
         when (event) {
-            is UiEvent.GetForecasts -> {
-                processDataEvent(DataEvent.LoadData)
-
-                for (city in citiesMutableSet.toList()) {
-                    getCityForecast(city)
-                }
-
-                processDataEvent(DataEvent.DataLoaded)
-            }
 
             is UiEvent.OnAddCityClicked -> {
-                singleLiveEvent.value = SingleEvent.ShowAddCityDialogue(
-                    title = R.string.text_type_in_new_city_name
-                )
+                singleLiveEvent.value = SingleEvent.ShowAddCityDialogue(message = R.string.text_type_in_new_city_name)
             }
 
             is UiEvent.OnAddCityConfirmed -> {
-                getCityForecast(event.city)
+                forecastInteractor.getCityForecast(event.city).fold(
+                    onSuccess = {
+                        val found = databaseList.find { elem -> elem.city == it.city }
+
+                        if (found == null) {
+                            databaseList.add(it)
+                        } else {
+                            databaseList.apply {
+                                remove(found)
+                                add(it)
+                            }
+                        }
+                    },
+                    onError = {
+                        singleLiveEvent.value =
+                            SingleEvent.ShowToast(
+                                it.localizedMessage ?: "Error occurred while gettind data from api"
+                            )
+                    }
+                )
+
+                return previousState.copy(chosenCities = databaseList.toList())
             }
 
-            is DataEvent.LoadData -> {
-                return previousState.copy(isLoading = true)
-            }
+            is DataEvent.DownloadDataFromDb -> {
 
-            is DataEvent.DataLoaded -> {
-                println(databaseMap.values.toList())
-                return previousState.copy(isLoading = false, forecastList = databaseMap.values.toList())
-            }
-
-            is DataEvent.OnSuccessDatabaseUploading -> {
-
-                for (item in event.databaseList) {
-                    databaseMap[item.city] = item
-                    citiesMutableSet.add(item.city)
-                }
-            }
-
-            is DataEvent.LoadDataFromDatabase -> {
                 forecastDatabase.getForecasts().fold(
                     onSuccess = {
-                        processDataEvent(DataEvent.OnSuccessDatabaseUploading(it.toDomain()))
+                        processDataEvent(DataEvent.ProcessDbData(it))
                     },
                     onFailure = {
-                        singleLiveEvent.value = SingleEvent.ShowToast(it.localizedMessage ?: "Error occurred")
+                        singleLiveEvent.value =
+                            SingleEvent.ShowToast(
+                                it.localizedMessage ?: "Error occurred while gettind data from db"
+                            )
                     }
                 )
             }
 
-            is DataEvent.OnSuccessForecastRequest -> {
-                val tempCityForecast = event.cityForecast
-                forecastDatabase.putForecast(tempCityForecast.toLocal())
-                databaseMap.remove(tempCityForecast.city)
-                databaseMap[tempCityForecast.city] = tempCityForecast
+            is DataEvent.ProcessDbData -> {
+
+                if (event.dbList.isNotEmpty()) {
+                    databaseList = event.dbList.toDomain().toMutableList()
+                }
+
+                processDataEvent(DataEvent.DownloadDataFromApi)
+            }
+
+            is DataEvent.DownloadDataFromApi -> {
+                val listToRemove: MutableList<CityForecastModel> = mutableListOf()
+                val listToAdd: MutableList<CityForecastModel> = mutableListOf()
+
+                for (item in databaseList) {
+                    forecastInteractor.getCityForecast(item.city).fold(
+                        onSuccess = {
+                            val found = databaseList.find { elem -> elem.city == it.city }
+
+                            if (found == null) {
+                                listToAdd.add(it)
+                            } else {
+                                listToRemove.add(found)
+                                listToAdd.add(it)
+                            }
+                        },
+                        onError = {
+                            singleLiveEvent.value =
+                                SingleEvent.ShowToast(
+                                    it.localizedMessage ?: "Error occurred while gettind data from api"
+                                )
+                        }
+                    )
+                }
+
+                databaseList.apply {
+                    addAll(listToAdd)
+                    removeAll(listToRemove)
+                }
+
+                return previousState.copy(chosenCities = databaseList.toList(), isLoading = false)
             }
         }
 
         return null
     }
 
-    private suspend fun getCityForecast(city: String) {
-
-        forecastInteractor.getCityForecast(city).fold(
-            onSuccess = {
-                processDataEvent(DataEvent.OnSuccessForecastRequest(it))
-            },
-            onError = {
-                singleLiveEvent.postValue(SingleEvent.ShowToast(it.localizedMessage ?: "Error occurred"))
-            }
-        )
-    }
-
-    private fun CityForecastModel.toLocal(): LocalCityForecastModel =
-        LocalCityForecastModel(city = this.city, temp = this.temp)
-
     private fun List<LocalCityForecastModel>.toDomain(): List<CityForecastModel> {
         return this.map {
-            CityForecastModel(city = it.city, temp = it.temp)
+            CityForecastModel(temp = it.temp, city = it.city)
         }
     }
 }

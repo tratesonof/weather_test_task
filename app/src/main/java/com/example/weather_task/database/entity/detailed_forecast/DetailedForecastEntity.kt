@@ -5,7 +5,7 @@ import androidx.room.PrimaryKey
 
 @Entity(tableName = "detailed_forecast_table")
 data class DetailedForecastEntity(
-    @PrimaryKey val key :String,
+    @PrimaryKey val key: String,
     val datetime: String,
     val city: String,
     val temp: String,

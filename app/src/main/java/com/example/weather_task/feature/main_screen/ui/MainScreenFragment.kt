@@ -52,7 +52,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_mainscreen) {
     }
 
     private fun render(viewState: ViewState) {
-        citiesAdapter?.items = viewState.forecastList
+        citiesAdapter?.items = viewState.chosenCities
         binding.progressBar.isVisible = viewState.isLoading
         binding.btnAddCity.isGone = viewState.isLoading
     }
@@ -65,7 +65,7 @@ class MainScreenFragment : Fragment(R.layout.fragment_mainscreen) {
 
                 MaterialAlertDialogBuilder(requireContext())
                     .setView(input)
-                    .setMessage(getString(singleEvent.title))
+                    .setMessage(getString(singleEvent.message))
                     .setPositiveButton(R.string.text_add) { _, _ ->
                         viewModel.processUiEvent(UiEvent.OnAddCityConfirmed(input.text.toString()))
                     }

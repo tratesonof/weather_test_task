@@ -15,11 +15,10 @@ import com.example.weather_task.databinding.FragmentDetailedForecastBinding
 import com.example.weather_task.feature.detailed_forecast.ui.adapter.DetailedForecastAdapter
 import org.koin.androidx.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
-import java.lang.IllegalStateException
 
 class DetailedForecastFragment : Fragment(R.layout.fragment_detailed_forecast) {
 
-    companion object{
+    companion object {
         private const val ARG_CITY = "city"
 
         fun newInstance(city: String) = DetailedForecastFragment().apply {
@@ -32,7 +31,7 @@ class DetailedForecastFragment : Fragment(R.layout.fragment_detailed_forecast) {
     private val city: String
         get() = requireArguments().getString(ARG_CITY)!!
 
-    private val viewModel:DetailedForecastViewModel by viewModel{
+    private val viewModel: DetailedForecastViewModel by viewModel {
         parametersOf(city)
     }
 

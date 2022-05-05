@@ -20,7 +20,7 @@ class ForecastAdapter(val onClicked: (CityForecastModel) -> Unit) : AsyncListDif
             bind {
                 binding.apply {
                     tvCity.text = item.city
-                    tvTemperature.text =  context.getString(R.string.text_template_temperature, item.temp)
+                    tvTemperature.text = context.getString(R.string.text_template_temperature, item.temp)
 
                     clCityForecast.setThrottledClickListener {
                         this@ForecastAdapter.onClicked(item)

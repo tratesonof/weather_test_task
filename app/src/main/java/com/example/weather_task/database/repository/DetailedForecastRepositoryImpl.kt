@@ -6,7 +6,8 @@ import com.example.weather_task.database.entity.detailed_forecast.DetailedForeca
 class DetailedForecastRepositoryImpl(private val detailedForecastDao: DetailedForecastDao) : DetailedForecastRepository {
 
     override suspend fun getDetailedForecast(): Result<List<LocalCityDetailedForecastModel>> =
-        Result.success(detailedForecastDao.getAll().map { LocalCityDetailedForecastModel(datetime = it.datetime, temp = it.temp, city = it.city) })
+        Result.success(
+            detailedForecastDao.getAll().map { LocalCityDetailedForecastModel(datetime = it.datetime, temp = it.temp, city = it.city) })
 
     override suspend fun clearDetailedForecast() {
         detailedForecastDao.deleteAll()
@@ -14,6 +15,13 @@ class DetailedForecastRepositoryImpl(private val detailedForecastDao: DetailedFo
     }
 
     override suspend fun putDetailedForecast(forecasts: List<LocalCityDetailedForecastModel>) {
-        detailedForecastDao.insertAll(detailedForecast = forecasts.map { DetailedForecastEntity(datetime = it.datetime, temp = it.temp, city = it.city, key = it.city + it.datetime) })
+        detailedForecastDao.insertAll(detailedForecast = forecasts.map {
+            DetailedForecastEntity(
+                datetime = it.datetime,
+                temp = it.temp,
+                city = it.city,
+                key = it.city + it.datetime
+            )
+        })
     }
 }

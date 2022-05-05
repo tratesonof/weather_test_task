@@ -8,13 +8,13 @@ import com.hannesdorfmann.adapterdelegates4.AsyncListDifferDelegationAdapter
 import com.hannesdorfmann.adapterdelegates4.dsl.adapterDelegateViewBinding
 
 class DetailedForecastAdapter : AsyncListDifferDelegationAdapter<DetailedForecastModel>(DetailedForecastDiffUtilCallback()) {
-    init{
+    init {
         delegatesManager.addDelegate(detailedForecastAdapterDelegate())
     }
 
     private fun detailedForecastAdapterDelegate() =
         adapterDelegateViewBinding<DetailedForecastModel, DetailedForecastModel, ItemHourForecastBinding>(
-            { layoutInflater, parent ->  ItemHourForecastBinding.inflate(layoutInflater, parent, false) }
+            { layoutInflater, parent -> ItemHourForecastBinding.inflate(layoutInflater, parent, false) }
         ) {
             bind {
                 binding.apply {
@@ -24,7 +24,7 @@ class DetailedForecastAdapter : AsyncListDifferDelegationAdapter<DetailedForecas
             }
         }
 
-    class DetailedForecastDiffUtilCallback : DiffUtil.ItemCallback<DetailedForecastModel>(){
+    class DetailedForecastDiffUtilCallback : DiffUtil.ItemCallback<DetailedForecastModel>() {
         override fun areItemsTheSame(oldItem: DetailedForecastModel, newItem: DetailedForecastModel): Boolean {
             return oldItem.datetime == newItem.datetime
         }

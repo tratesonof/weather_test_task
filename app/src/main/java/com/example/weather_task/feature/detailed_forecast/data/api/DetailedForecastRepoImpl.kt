@@ -4,5 +4,6 @@ import com.example.weather_task.feature.detailed_forecast.domain.model.DetailedF
 
 class DetailedForecastRepoImpl(private val source: DetailedForecastRemoteSource) : DetailedForecastRepo {
 
-    override suspend fun getDetailedCityForecast(city: String): List<DetailedForecastModel> = source.getDetailedCityForecast(city).toDomain()
+    override suspend fun getDetailedCityForecast(city: String): List<DetailedForecastModel> =
+        source.getDetailedCityForecast(city).toDomain()
 }

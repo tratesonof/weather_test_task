@@ -1,12 +1,9 @@
 package com.example.weather_task.di
 
-import com.example.weather_task.R
 import com.example.weather_task.constants.Constants
-import com.example.weather_task.constants.Constants.BASE_URL
 import com.github.terrakok.cicerone.Cicerone
 import com.github.terrakok.cicerone.NavigatorHolder
 import com.github.terrakok.cicerone.Router
-import com.github.terrakok.cicerone.androidx.AppNavigator
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import org.koin.dsl.module
@@ -29,15 +26,15 @@ val appModule = module {
             .build()
     }
 
-    single<Cicerone<Router>>{
+    single<Cicerone<Router>> {
         Cicerone.create()
     }
 
-    single<Router>{
+    single<Router> {
         get<Cicerone<Router>>().router
     }
 
-    single<NavigatorHolder>{
+    single<NavigatorHolder> {
         get<Cicerone<Router>>().getNavigatorHolder()
     }
 }

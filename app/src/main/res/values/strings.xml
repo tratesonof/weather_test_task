@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Weather Task</string>
+    <string name="text_city">City</string>
+    <string name="text_temperature">Temperature</string>
+    <string name="text_template_temperature">%s°C</string>
+    <string name="text_add_city">Add city</string>
+    <string name="text_type_in_new_city_name">Type in new city name</string>
+    <string name="text_cancel">Cancel</string>
+    <string name="text_add">Confirm</string>
+    <string name="tv_datetime">Datetime</string>
+</resources>
